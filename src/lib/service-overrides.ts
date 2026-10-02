@@ -1,34 +1,15 @@
-import { promises as fs } from "fs";
-import path from "path";
 import bundledOverrides from "@/catalog/service-overrides.json";
+import { readCatalogDocument, writeCatalogDocument } from "@/lib/catalog-store";
 import type { ServiceOverride, ServiceOverridesMap } from "@/types/admin";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const OVERRIDES_FILE = path.join(DATA_DIR, "service-overrides.json");
-
-async function ensureStore(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  try {
-    await fs.access(OVERRIDES_FILE);
-  } catch {
-    await fs.writeFile(OVERRIDES_FILE, "{}", "utf-8");
-  }
-}
+const DOCUMENT = "service-overrides.json";
 
 export async function getServiceOverrides(): Promise<ServiceOverridesMap> {
-  try {
-    const raw = await fs.readFile(OVERRIDES_FILE, "utf-8");
-    return JSON.parse(raw) as ServiceOverridesMap;
-  } catch {
-    return bundledOverrides as ServiceOverridesMap;
-  }
+  return readCatalogDocument(DOCUMENT, bundledOverrides as ServiceOverridesMap);
 }
 
-export async function saveServiceOverrides(
-  overrides: ServiceOverridesMap,
-): Promise<void> {
-  await ensureStore();
-  await fs.writeFile(OVERRIDES_FILE, JSON.stringify(overrides, null, 2), "utf-8");
+export async function saveServiceOverrides(overrides: ServiceOverridesMap): Promise<void> {
+  await writeCatalogDocument(DOCUMENT, overrides);
 }
 
 export async function getServiceOverride(

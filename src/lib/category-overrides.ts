@@ -1,38 +1,15 @@
-import { promises as fs } from "fs";
-import path from "path";
 import bundledCategories from "@/catalog/category-overrides.json";
+import { readCatalogDocument, writeCatalogDocument } from "@/lib/catalog-store";
 import type { CategoryOverride, CategoryOverridesMap } from "@/types/admin";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const CATEGORY_OVERRIDES_FILE = path.join(DATA_DIR, "category-overrides.json");
-
-async function ensureStore(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  try {
-    await fs.access(CATEGORY_OVERRIDES_FILE);
-  } catch {
-    await fs.writeFile(CATEGORY_OVERRIDES_FILE, "{}", "utf-8");
-  }
-}
+const DOCUMENT = "category-overrides.json";
 
 export async function getCategoryOverrides(): Promise<CategoryOverridesMap> {
-  try {
-    const raw = await fs.readFile(CATEGORY_OVERRIDES_FILE, "utf-8");
-    return JSON.parse(raw) as CategoryOverridesMap;
-  } catch {
-    return bundledCategories as CategoryOverridesMap;
-  }
+  return readCatalogDocument(DOCUMENT, bundledCategories as CategoryOverridesMap);
 }
 
-export async function saveCategoryOverrides(
-  overrides: CategoryOverridesMap,
-): Promise<void> {
-  await ensureStore();
-  await fs.writeFile(
-    CATEGORY_OVERRIDES_FILE,
-    JSON.stringify(overrides, null, 2),
-    "utf-8",
-  );
+export async function saveCategoryOverrides(overrides: CategoryOverridesMap): Promise<void> {
+  await writeCatalogDocument(DOCUMENT, overrides);
 }
 
 export async function setCategoryOverride(
