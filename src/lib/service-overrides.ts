@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import bundledOverrides from "@/catalog/service-overrides.json";
 import type { ServiceOverride, ServiceOverridesMap } from "@/types/admin";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -15,9 +16,12 @@ async function ensureStore(): Promise<void> {
 }
 
 export async function getServiceOverrides(): Promise<ServiceOverridesMap> {
-  await ensureStore();
-  const raw = await fs.readFile(OVERRIDES_FILE, "utf-8");
-  return JSON.parse(raw) as ServiceOverridesMap;
+  try {
+    const raw = await fs.readFile(OVERRIDES_FILE, "utf-8");
+    return JSON.parse(raw) as ServiceOverridesMap;
+  } catch {
+    return bundledOverrides as ServiceOverridesMap;
+  }
 }
 
 export async function saveServiceOverrides(

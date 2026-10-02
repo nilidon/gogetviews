@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import bundledCategories from "@/catalog/category-overrides.json";
 import type { CategoryOverride, CategoryOverridesMap } from "@/types/admin";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -15,9 +16,12 @@ async function ensureStore(): Promise<void> {
 }
 
 export async function getCategoryOverrides(): Promise<CategoryOverridesMap> {
-  await ensureStore();
-  const raw = await fs.readFile(CATEGORY_OVERRIDES_FILE, "utf-8");
-  return JSON.parse(raw) as CategoryOverridesMap;
+  try {
+    const raw = await fs.readFile(CATEGORY_OVERRIDES_FILE, "utf-8");
+    return JSON.parse(raw) as CategoryOverridesMap;
+  } catch {
+    return bundledCategories as CategoryOverridesMap;
+  }
 }
 
 export async function saveCategoryOverrides(

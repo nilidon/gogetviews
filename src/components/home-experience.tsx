@@ -75,11 +75,7 @@ export function HomeExperience({
           <section className="mx-auto max-w-6xl px-5 py-20">
             <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-amber-950">
               <p className="font-semibold">Services unavailable</p>
-              <p className="mt-2 text-sm">
-                Check your API configuration in{" "}
-                <code className="rounded bg-white px-1.5 py-0.5">.env.local</code> and restart the
-                server.
-              </p>
+              <p className="mt-2 text-sm">The service list could not be loaded. Try again in a moment.</p>
             </div>
           </section>
         ) : (
