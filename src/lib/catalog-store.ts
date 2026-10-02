@@ -37,17 +37,32 @@ async function writeLocal(filename: string, value: unknown): Promise<void> {
 export async function readCatalogDocument<T>(filename: string, fallback: T): Promise<T> {
   if (!supabaseEnv().configured) return readLocal(filename, fallback);
 
-  await ensureBucket();
-  const { data, error } = await createServiceClient().storage.from(BUCKET).download(filename);
-  if (error || !data) {
-    if (error && !/not found/i.test(error.message)) {
-      throw new Error(error.message);
+  const env = supabaseEnv();
+  const response = await fetch(
+    `${env.url}/storage/v1/object/${BUCKET}/${filename}?t=${Date.now()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.service}`,
+        apikey: env.service,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (response.status === 400 || response.status === 404) {
+    const message = await response.text();
+    if (!/not found/i.test(message)) {
+      throw new Error("Could not read the saved catalog.");
     }
     await writeCatalogDocument(filename, fallback);
     return fallback;
   }
 
-  return JSON.parse(await data.text()) as T;
+  if (!response.ok) {
+    throw new Error("Could not read the saved catalog.");
+  }
+
+  return JSON.parse(await response.text()) as T;
 }
 
 export async function writeCatalogDocument(filename: string, value: unknown): Promise<void> {
@@ -57,11 +72,18 @@ export async function writeCatalogDocument(filename: string, value: unknown): Pr
   }
 
   await ensureBucket();
-  const { error } = await createServiceClient()
-    .storage.from(BUCKET)
-    .upload(filename, JSON.stringify(value), {
-      upsert: true,
-      contentType: "application/json",
-    });
-  if (error) throw new Error(error.message);
+  const body = JSON.stringify(value);
+  const storage = createServiceClient().storage.from(BUCKET);
+  const options = { contentType: "application/json", cacheControl: "0" };
+  const updated = await storage.update(filename, body, options);
+  if (!updated.error) return;
+
+  if (!/not found/i.test(updated.error.message)) {
+    const uploaded = await storage.upload(filename, body, { ...options, upsert: true });
+    if (!uploaded.error) return;
+    throw new Error(uploaded.error.message);
+  }
+
+  const uploaded = await storage.upload(filename, body, options);
+  if (uploaded.error) throw new Error(uploaded.error.message);
 }
