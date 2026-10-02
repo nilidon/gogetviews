@@ -1,26 +1,170 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-bricolage), "Bricolage Grotesque", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-marquee: marquee 32s linear infinite;
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: light;
+  --background: oklch(0.975 0.018 230);
+  --foreground: oklch(0.2 0.07 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.07 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.07 258);
+  --primary: oklch(0.55 0.17 245);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.925 0.045 230);
+  --secondary-foreground: oklch(0.2 0.07 258);
+  --muted: oklch(0.945 0.03 230);
+  --muted-foreground: oklch(0.4 0.06 250);
+  --accent: oklch(0.55 0.17 245);
+  --accent-foreground: oklch(1 0 0);
+  --accent-hover: oklch(0.48 0.16 250);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.86 0.04 232);
+  --input: oklch(0.86 0.04 232);
+  --ring: oklch(0.55 0.17 245);
+  --ink: oklch(0.2 0.07 258);
+  --ink-foreground: oklch(0.99 0.005 230);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.925 0.045 230);
+  --radius: 0.875rem;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --background: #08080d;
+  --foreground: #f4f4f5;
+  --card: #111118;
+  --card-foreground: #f4f4f5;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1a24;
+  --secondary-foreground: #f4f4f5;
+  --muted: #a1a1aa;
+  --muted-foreground: #a1a1aa;
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  --accent-hover: #818cf8;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #6366f1;
+  --ink: #08080d;
+  --ink-foreground: #f4f4f5;
+  --surface: #111118;
+  --surface-2: #1a1a24;
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+::selection {
+  background: oklch(0.55 0.17 245);
+  color: white;
+}
+
+.page-shell {
+  @apply mx-auto w-full max-w-2xl px-4 sm:px-6;
+}
+
+.input {
+  @apply w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm text-foreground outline-none transition-all duration-200 placeholder:text-muted-foreground/70 focus:border-primary focus:ring-4 focus:ring-primary/15;
+}
+
+.btn-primary {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200 hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+}
+
+.btn-ghost {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:border-foreground/20 hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+.card {
+  @apply rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl shadow-primary/10 sm:p-8;
+}
+
+.label {
+  @apply mb-2 block text-sm font-semibold text-foreground;
+}
+
+.hint {
+  @apply mt-2 text-xs leading-relaxed text-muted-foreground;
+}
+
+.theme-dark .btn-primary {
+  @apply rounded-xl hover:bg-accent-hover;
+}
+
+.theme-dark .btn-ghost {
+  @apply rounded-xl hover:border-white/15 hover:bg-white/5;
+}
+
+.theme-dark .card {
+  @apply bg-surface/80 shadow-black/20;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
