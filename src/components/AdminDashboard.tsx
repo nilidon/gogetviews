@@ -11,6 +11,7 @@ import {
   Pencil,
   RotateCcw,
 } from "lucide-react";
+import { sortServicesForSite } from "@/lib/display-order";
 import { formatUsdAmount } from "@/lib/pricing";
 import { SearchInput } from "@/components/SearchInput";
 
@@ -28,6 +29,7 @@ interface AdminServiceRow {
   enabled: boolean;
   hasCustomPrice: boolean;
   hasCustomName: boolean;
+  sortOrder?: number;
 }
 
 interface AdminGroup {
@@ -138,7 +140,7 @@ export function AdminDashboard() {
   };
 
   const reorderItem = async (
-    type: "category" | "service",
+    type: "category" | "service" | "site",
     category: string,
     direction: "up" | "down",
     serviceId?: number,
@@ -193,6 +195,18 @@ export function AdminDashboard() {
       .filter((group) => group.services.length > 0) ?? [];
 
   const isSearching = search.trim().length > 0;
+  const siteOrder = visibilityTab === "active" && !isSearching;
+  const displayGroups: AdminGroup[] = siteOrder
+    ? [
+        {
+          category: "__site__",
+          label: "Order on the site",
+          apiLabel: "",
+          hasCustomName: false,
+          services: sortServicesForSite(filteredGroups.flatMap((group) => group.services)),
+        },
+      ]
+    : filteredGroups;
 
   const saveCategoryName = (category: string, apiLabel: string) => {
     const draft = (categoryDrafts[category] ?? "").trim();
@@ -347,8 +361,9 @@ export function AdminDashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredGroups.map((group, groupIndex) => {
-              const isOpen = isSearching || expanded.has(group.category);
+            {displayGroups.map((group, groupIndex) => {
+              const siteList = group.category === "__site__";
+              const isOpen = siteList || isSearching || expanded.has(group.category);
               const isEditingGroup = editingCategory === group.category;
               const categoryDraft =
                 categoryDrafts[group.category] ?? group.label;
@@ -361,7 +376,9 @@ export function AdminDashboard() {
                   <div className="flex items-center gap-2 px-4 py-3.5 hover:bg-white/[0.02]">
                     <button
                       type="button"
-                      onClick={() => toggleCategory(group.category)}
+                      onClick={() => {
+                        if (!siteList) toggleCategory(group.category);
+                      }}
                       className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 text-left"
                     >
                       <div className="min-w-0 flex-1">
@@ -410,15 +427,17 @@ export function AdminDashboard() {
                           {group.services.length === 1 ? "" : "s"}
                         </p>
                       </div>
-                      <ChevronRight
-                        className={`h-4 w-4 shrink-0 text-muted transition-transform ${
-                          isOpen ? "rotate-90" : ""
-                        }`}
-                      />
+                      {!siteList && (
+                        <ChevronRight
+                          className={`h-4 w-4 shrink-0 text-muted transition-transform ${
+                            isOpen ? "rotate-90" : ""
+                          }`}
+                        />
+                      )}
                     </button>
 
                     <div className="flex shrink-0 items-center gap-1">
-                      {!isSearching && (
+                      {!isSearching && !siteList && (
                         <div className="flex flex-col">
                           <button
                             type="button"
@@ -437,7 +456,7 @@ export function AdminDashboard() {
                             type="button"
                             title="Move category down"
                             disabled={
-                              groupIndex === filteredGroups.length - 1 ||
+                              groupIndex === displayGroups.length - 1 ||
                               reordering !== null ||
                               savingCategory === group.category
                             }
@@ -448,7 +467,7 @@ export function AdminDashboard() {
                           </button>
                         </div>
                       )}
-                      {!isEditingGroup && (
+                      {!isEditingGroup && !siteList && (
                         <button
                           type="button"
                           title="Rename category"
@@ -530,8 +549,8 @@ export function AdminDashboard() {
                                     }
                                     onClick={() =>
                                       reorderItem(
-                                        "service",
-                                        group.category,
+                                        siteList ? "site" : "service",
+                                        siteList ? service.category : group.category,
                                         "up",
                                         service.service,
                                       )
@@ -550,8 +569,8 @@ export function AdminDashboard() {
                                     }
                                     onClick={() =>
                                       reorderItem(
-                                        "service",
-                                        group.category,
+                                        siteList ? "site" : "service",
+                                        siteList ? service.category : group.category,
                                         "down",
                                         service.service,
                                       )
@@ -594,6 +613,9 @@ export function AdminDashboard() {
                                 <div className="flex items-start gap-2">
                                   <div className="min-w-0 flex-1">
                                     <p className="text-sm leading-snug">{service.displayName}</p>
+                                    {siteList && (
+                                      <p className="mt-0.5 text-xs text-muted">{service.categoryLabel}</p>
+                                    )}
                                     {service.hasCustomName && (
                                       <p className="mt-0.5 truncate text-xs text-muted">
                                         API: {service.apiName}
@@ -674,8 +696,8 @@ export function AdminDashboard() {
                                     }
                                     onClick={() =>
                                       reorderItem(
-                                        "service",
-                                        group.category,
+                                        siteList ? "site" : "service",
+                                        siteList ? service.category : group.category,
                                         "up",
                                         service.service,
                                       )
@@ -694,8 +716,8 @@ export function AdminDashboard() {
                                     }
                                     onClick={() =>
                                       reorderItem(
-                                        "service",
-                                        group.category,
+                                        siteList ? "site" : "service",
+                                        siteList ? service.category : group.category,
                                         "down",
                                         service.service,
                                       )

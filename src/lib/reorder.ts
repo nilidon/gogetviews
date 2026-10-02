@@ -5,6 +5,7 @@ import {
   buildServiceFallbackIndex,
   sortCategoriesForDisplay,
   sortServicesForDisplay,
+  sortServicesForSite,
 } from "./display-order";
 import { getCategoryOverrides, saveCategoryOverrides } from "./category-overrides";
 import { getServices } from "./gogetviews";
@@ -101,6 +102,52 @@ async function orderedServices(
   );
 
   return { services, serviceOverrides };
+}
+
+export async function reorderSiteService(
+  platform: string,
+  serviceId: number,
+  direction: "up" | "down",
+): Promise<boolean> {
+  const [apiServices, serviceOverrides] = await Promise.all([
+    getServices(),
+    getServiceOverrides(),
+  ]);
+
+  const enabled = apiServices
+    .filter(
+      (service) =>
+        extractPlatform(service.category) === platform &&
+        isServiceEnabled(service.service, serviceOverrides),
+    )
+    .map((service) => ({
+      ...service,
+      sortOrder: serviceOverrides[String(service.service)]?.sortOrder,
+    }));
+
+  const ordered = sortServicesForSite(enabled);
+  const index = ordered.findIndex((service) => service.service === serviceId);
+  if (index < 0) return false;
+
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= ordered.length) return false;
+
+  [ordered[index], ordered[targetIndex]] = [ordered[targetIndex], ordered[index]];
+
+  const now = new Date().toISOString();
+  const nextOverrides = { ...serviceOverrides };
+  for (let i = 0; i < ordered.length; i++) {
+    const key = String(ordered[i].service);
+    nextOverrides[key] = {
+      ...nextOverrides[key],
+      enabled: true,
+      sortOrder: i * 10,
+      updatedAt: now,
+    };
+  }
+
+  await saveServiceOverrides(nextOverrides);
+  return true;
 }
 
 export async function reorderCategory(

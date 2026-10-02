@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { PlatformIcon } from "@/components/platform-icon";
 import { getPlatformBrand } from "@/lib/platform-brands";
 import { platformIconKey } from "@/lib/platforms";
+import { sortServicesForSite } from "@/lib/display-order";
 import { formatUsdAmount } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import type { PlatformGroup, ServiceWithPricing } from "@/types/service";
@@ -37,7 +38,8 @@ export function ServicesSection({
   }
 
   const visible = useMemo(
-    () => services.filter((service) => service.platform === platform?.name),
+    () =>
+      sortServicesForSite(services.filter((service) => service.platform === platform?.name)),
     [platform?.name, services],
   );
 

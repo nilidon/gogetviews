@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { reorderCategory, reorderService } from "@/lib/reorder";
+import { reorderCategory, reorderService, reorderSiteService } from "@/lib/reorder";
 
 export async function POST(request: Request) {
   const unauthorized = await requireAdminApi();
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     platform?: string;
-    type?: "category" | "service";
+    type?: "category" | "service" | "site";
     category?: string;
     serviceId?: number;
     direction?: "up" | "down";
@@ -19,11 +19,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Platform is required" }, { status: 400 });
   }
 
-  if (body.type !== "category" && body.type !== "service") {
+  if (body.type !== "category" && body.type !== "service" && body.type !== "site") {
     return NextResponse.json({ error: "Invalid reorder type" }, { status: 400 });
   }
 
-  if (!body.category?.trim()) {
+  if (body.type !== "site" && !body.category?.trim()) {
     return NextResponse.json({ error: "Category is required" }, { status: 400 });
   }
 
@@ -33,6 +33,19 @@ export async function POST(request: Request) {
 
   const enabledOnly = body.enabledOnly !== false;
 
+  if (body.type === "site") {
+    if (!Number.isFinite(body.serviceId)) {
+      return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
+    }
+
+    const moved = await reorderSiteService(body.platform.trim(), body.serviceId!, body.direction);
+    if (!moved) {
+      return NextResponse.json({ error: "Unable to reorder service" }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.type === "service") {
     if (!Number.isFinite(body.serviceId)) {
       return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
@@ -40,7 +53,7 @@ export async function POST(request: Request) {
 
     const moved = await reorderService(
       body.platform.trim(),
-      body.category.trim(),
+      body.category!.trim(),
       body.serviceId!,
       body.direction,
       enabledOnly,
@@ -55,7 +68,7 @@ export async function POST(request: Request) {
 
   const moved = await reorderCategory(
     body.platform.trim(),
-    body.category.trim(),
+    body.category!.trim(),
     body.direction,
     enabledOnly,
   );

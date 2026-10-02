@@ -44,6 +44,13 @@ export function buildCategoryFallbackIndex(
   return new Map(categories.map((category, index) => [category, index]));
 }
 
+export function sortServicesForSite<T extends { service: number; sortOrder?: number }>(
+  services: T[],
+): T[] {
+  const fallback = buildServiceFallbackIndex(services);
+  return sortServicesForDisplay(services, (service) => fallback.get(service.service) ?? 0);
+}
+
 export function buildServiceFallbackIndex(
   services: Array<{ service: number }>,
 ): Map<number, number> {
