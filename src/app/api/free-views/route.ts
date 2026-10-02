@@ -1,12 +1,22 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getCurrentAccount } from "@/lib/account-auth";
-import { claimFreeView } from "@/lib/free-views";
+import { deliverFreeViews } from "@/lib/free-views";
+import {
+  findFreeViewsService,
+  FREE_VIEWS_QUANTITY,
+  freeViewsQuantityFits,
+  placeFreeViewsOrder,
+} from "@/lib/free-views-order";
+import { createOrder } from "@/lib/orders";
 import { resolveSocialProfile } from "@/lib/social-profile";
 import { markAccountFreeViewsClaimed } from "@/lib/supabase-auth";
 
 export const dynamic = "force-dynamic";
 
 const ALREADY_SENT = "Free views were already sent to this profile.";
+const UNAVAILABLE = "Free views aren't available for this platform right now.";
+const FAILED = "We couldn't send the free views. Try again.";
 
 export async function POST(request: Request) {
   let body: { platform?: string; link?: string };
@@ -28,17 +38,46 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: profile.error }, { status: 400 });
     }
 
+    const service = await findFreeViewsService(profile.platform);
+    if (!service || !freeViewsQuantityFits(service)) {
+      return NextResponse.json({ error: UNAVAILABLE }, { status: 503 });
+    }
+
     const account = await getCurrentAccount();
-    const claim = await claimFreeView({
+    const claim = await deliverFreeViews({
       platform: profile.platform,
       profileKey: profile.profileKey,
       username: profile.username,
       link,
       userId: account?.id,
+      send: () => placeFreeViewsOrder(service.service, link),
     });
 
-    if (!claim.ok) {
+    if (!claim.ok && claim.reason === "already_claimed") {
       return NextResponse.json({ code: "already_claimed", error: ALREADY_SENT }, { status: 409 });
+    }
+
+    if (!claim.ok) {
+      return NextResponse.json({ error: FAILED }, { status: 502 });
+    }
+
+    try {
+      await createOrder({
+        id: randomUUID(),
+        gogetviewsOrderId: claim.orderId,
+        serviceId: service.service,
+        serviceName: `${profile.platform} - Views`,
+        platform: profile.platform,
+        link,
+        email: account?.email,
+        userId: account?.id,
+        quantity: FREE_VIEWS_QUANTITY,
+        amountCents: 0,
+        currency: "usd",
+        status: "processing",
+      });
+    } catch {
+      // The supplier order is already placed. A missing orders table should not block the gift.
     }
 
     if (account) {
@@ -51,9 +90,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json(
-      { error: "We couldn't check this profile. Try again." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: FAILED }, { status: 500 });
   }
 }

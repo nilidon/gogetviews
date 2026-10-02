@@ -23,6 +23,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
   const [error, setError] = useState<string | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
   const selected = platforms.find((item) => item.name === platform) ?? fallback;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -46,6 +47,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
         setError(data.error ?? "We couldn't claim free views for this profile.");
         return;
       }
+      setSent(true);
       onClaim({ platform: selected.name, link });
     } catch {
       setError("We couldn't check this profile. Try again.");
@@ -115,6 +117,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
                       setPlatform(item.name);
                       setError(null);
                       setAlreadyClaimed(false);
+                      setSent(false);
                     }}
                     className="sr-only"
                   />
@@ -145,9 +148,16 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
             onInput={() => {
               setError(null);
               setAlreadyClaimed(false);
+              setSent(false);
             }}
           />
         </div>
+
+        {sent && (
+          <p className={cn("text-sm font-medium", tone === "dark" ? "text-white" : "text-foreground")}>
+            Your 100,000 free views are on the way.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="text-sm font-medium leading-relaxed text-destructive">
@@ -173,10 +183,10 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
 
           <button
           type="submit"
-          disabled={pending}
+          disabled={pending || sent}
           className="group mt-1 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:-translate-y-0.5 hover:bg-ink disabled:translate-y-0 disabled:opacity-70"
         >
-          {pending ? "Checking this profile..." : "Claim my 100,000 free views"}
+          {pending ? "Sending your free views..." : "Claim my 100,000 free views"}
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </button>
       </form>

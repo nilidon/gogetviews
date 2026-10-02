@@ -179,12 +179,14 @@ export function AdminDashboard() {
       .map((group) => ({
         ...group,
         services: group.services.filter((service) => {
+          const q = search.trim().toLowerCase();
+          const idQuery = /^\d+$/.test(q);
           const matchesTab =
-            visibilityTab === "active" ? service.enabled : !service.enabled;
+            idQuery || (visibilityTab === "active" ? service.enabled : !service.enabled);
           if (!matchesTab) return false;
-          if (!search.trim()) return true;
-          const q = search.toLowerCase();
+          if (!q) return true;
           return (
+            String(service.service).includes(q) ||
             service.displayName.toLowerCase().includes(q) ||
             service.apiName.toLowerCase().includes(q) ||
             group.label.toLowerCase().includes(q) ||
@@ -343,7 +345,7 @@ export function AdminDashboard() {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search services or categories..."
+            placeholder="Search by name or service ID..."
           />
         </div>
 
