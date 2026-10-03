@@ -27,7 +27,9 @@ export function ServicesSection({
   onPlatformChange,
   onOrder,
 }: ServicesSectionProps) {
-  const [active, setActive] = useState(platforms[0]?.name ?? "Instagram");
+  const [active, setActive] = useState(
+    platforms.find((item) => item.name === "Instagram")?.name ?? platforms[0]?.name ?? "Instagram",
+  );
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const currentName = selectedPlatform ?? active;
   const platform = platforms.find((item) => item.name === currentName) ?? platforms[0];

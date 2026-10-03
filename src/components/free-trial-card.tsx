@@ -19,8 +19,8 @@ interface FreeTrialCardProps {
 }
 
 export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialCardProps) {
-  const fallback = platforms.find((item) => item.id === "tiktok") ?? platforms[0];
-  const [platform, setPlatform] = useState(fallback?.name ?? "TikTok");
+  const fallback = platforms.find((item) => item.id === "instagram") ?? platforms[0];
+  const [platform, setPlatform] = useState(fallback?.name ?? "Instagram");
   const [error, setError] = useState<string | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [pending, setPending] = useState(false);
@@ -164,7 +164,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
             name="link"
             type="url"
             required
-              placeholder={`https://${platformIconKey(selected?.name ?? "tiktok")}.com/...`}
+              placeholder={`https://${platformIconKey(selected?.name ?? "instagram")}.com/...`}
               className={cn(inputClass, tone === "dark" && "border-white/15 bg-white/5 text-white placeholder:text-white/40")}
             onInput={() => {
               setError(null);
