@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Gift } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { ArrowRight, Check, Gift } from "lucide-react";
 import { PlatformIcon } from "@/components/platform-icon";
 import { getPlatformBrand } from "@/lib/platform-brands";
 import { platformIconKey } from "@/lib/platforms";
@@ -24,6 +25,21 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [showSent, setShowSent] = useState(false);
+
+  useEffect(() => {
+    if (!showSent) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowSent(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [showSent]);
   const selected = platforms.find((item) => item.name === platform) ?? fallback;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -48,6 +64,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
         return;
       }
       setSent(true);
+      setShowSent(true);
       onClaim({ platform: selected.name, link });
     } catch {
       setError("We couldn't check this profile. Try again.");
@@ -115,6 +132,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
                       setError(null);
                       setAlreadyClaimed(false);
                       setSent(false);
+                      setShowSent(false);
                     }}
                     className="sr-only"
                   />
@@ -152,15 +170,10 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
               setError(null);
               setAlreadyClaimed(false);
               setSent(false);
+              setShowSent(false);
             }}
           />
         </div>
-
-        {sent && (
-          <p className={cn("text-sm font-medium", tone === "dark" ? "text-white" : "text-foreground")}>
-            Your 10,000 free views are on the way.
-          </p>
-        )}
 
         {error && (
           <p role="alert" className="text-sm font-medium leading-relaxed text-destructive">
@@ -193,6 +206,41 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </button>
       </form>
+
+      {showSent &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-5"
+            onClick={() => setShowSent(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="free-views-sent-title"
+              className="w-full max-w-md rounded-3xl border border-border bg-card px-8 py-10 text-center shadow-2xl shadow-primary/20"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                <Check className="size-7" aria-hidden="true" />
+              </span>
+              <p
+                id="free-views-sent-title"
+                className="mt-5 font-display text-2xl font-bold leading-tight text-foreground"
+              >
+                Your 10,000 free views are on the way.
+              </p>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setShowSent(false)}
+                className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:-translate-y-0.5 hover:bg-ink"
+              >
+                Got it
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

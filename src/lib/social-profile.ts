@@ -1,7 +1,7 @@
 import { ALLOWED_PLATFORMS, isAllowedPlatform, type AllowedPlatform } from "@/lib/platforms";
 
 const PLATFORM_HOSTS: Record<AllowedPlatform, string[]> = {
-  Instagram: ["instagram.com"],
+  Instagram: ["instagram.com", "instagr.am"],
   TikTok: ["tiktok.com"],
   Facebook: ["facebook.com", "fb.com", "fb.watch"],
   YouTube: ["youtube.com", "youtu.be", "youtube-nocookie.com"],
@@ -93,9 +93,10 @@ const RESERVED: Record<AllowedPlatform, Set<string>> = {
 
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+const PREVIEW_UA = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)";
 
 export type ProfileResolution =
-  | { ok: true; platform: AllowedPlatform; username: string; profileKey: string }
+  | { ok: true; platform: AllowedPlatform; username: string; profileKey: string; videoUrl: string }
   | { ok: false; error: string };
 
 export async function resolveSocialProfile(
@@ -106,9 +107,11 @@ export async function resolveSocialProfile(
     return { ok: false, error: "Pick a platform, then paste the video link." };
   }
 
+  const trimmed = rawLink.trim();
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   let url: URL;
   try {
-    url = new URL(rawLink.trim());
+    url = new URL(candidate);
   } catch {
     return { ok: false, error: "Paste a valid video link." };
   }
@@ -130,8 +133,10 @@ export async function resolveSocialProfile(
   }
 
   const direct = usernameFromUrl(platformName, url);
-  const username = direct ?? (await lookupUsername(platformName, url));
-  if (!username) {
+  const found = direct
+    ? { username: direct, videoUrl: url.toString() }
+    : await lookupUsername(platformName, url);
+  if (!found) {
     return {
       ok: false,
       error: "We couldn't tell which profile this video belongs to. Paste the video link from that account.",
@@ -141,8 +146,9 @@ export async function resolveSocialProfile(
   return {
     ok: true,
     platform: platformName,
-    username,
-    profileKey: `${platformName.toLowerCase()}:${username.toLowerCase()}`,
+    username: found.username,
+    videoUrl: found.videoUrl,
+    profileKey: `${platformName.toLowerCase()}:${found.username.toLowerCase()}`,
   };
 }
 
@@ -222,21 +228,29 @@ function usernameFromUrl(platform: AllowedPlatform, url: URL): string | null {
   return null;
 }
 
-async function lookupUsername(platform: AllowedPlatform, url: URL): Promise<string | null> {
+async function lookupUsername(
+  platform: AllowedPlatform,
+  url: URL,
+): Promise<{ username: string; videoUrl: string } | null> {
   const finalUrl = await followRedirects(url.toString(), platform);
-  let resolved: URL;
+  let resolved = url;
   try {
     resolved = new URL(finalUrl);
   } catch {
-    return null;
+    resolved = url;
   }
 
   const fromRedirect = usernameFromUrl(platform, resolved);
-  if (fromRedirect) return fromRedirect;
+  if (fromRedirect) return { username: fromRedirect, videoUrl: resolved.toString() };
 
-  if (platform === "YouTube") return youtubeAuthor(resolved.toString());
-  if (platform === "TikTok") return tiktokAuthor(resolved.toString());
-  if (platform === "Instagram") return instagramOwner(resolved);
+  if (platform === "YouTube") {
+    const username = await youtubeAuthor(resolved.toString());
+    return username ? { username, videoUrl: resolved.toString() } : null;
+  }
+  if (platform === "TikTok") {
+    return (await tiktokAuthor(url.toString())) ?? (resolved.toString() === url.toString() ? null : tiktokAuthor(resolved.toString()));
+  }
+  if (platform === "Instagram") return instagramOwner(url, resolved);
   return null;
 }
 
@@ -257,7 +271,26 @@ async function youtubeAuthor(videoUrl: string): Promise<string | null> {
   }
 }
 
-async function tiktokAuthor(videoUrl: string): Promise<string | null> {
+async function tiktokAuthor(videoUrl: string): Promise<{ username: string; videoUrl: string } | null> {
+  const fromOembed = await tiktokOembed(videoUrl);
+  if (fromOembed) return { username: fromOembed, videoUrl: tiktokVideoUrl(videoUrl) ?? videoUrl };
+
+  const videoId = videoUrl.match(/\/video\/(\d+)/)?.[1];
+  const canonical = videoId ? `https://www.tiktok.com/video/${videoId}` : null;
+  if (canonical && canonical !== videoUrl) {
+    const fromId = await tiktokOembed(canonical);
+    if (fromId) return { username: fromId, videoUrl: canonical };
+  }
+
+  return tiktokUsernameFromPage(videoUrl);
+}
+
+function tiktokVideoUrl(videoUrl: string): string | null {
+  const videoId = videoUrl.match(/\/video\/(\d+)/)?.[1];
+  return videoId ? `https://www.tiktok.com/video/${videoId}` : null;
+}
+
+async function tiktokOembed(videoUrl: string): Promise<string | null> {
   try {
     const response = await fetch(
       `https://www.tiktok.com/oembed?url=${encodeURIComponent(videoUrl)}`,
@@ -275,31 +308,121 @@ async function tiktokAuthor(videoUrl: string): Promise<string | null> {
   }
 }
 
-async function instagramOwner(url: URL): Promise<string | null> {
-  const parts = segments(url);
-  const kindIndex = parts.findIndex((part) => ["p", "reel", "reels", "tv"].includes(part.toLowerCase()));
-  const code = kindIndex >= 0 ? parts[kindIndex + 1] : null;
-  if (!code || !/^[\w-]+$/.test(code)) return null;
-
-  const kind = parts[kindIndex].toLowerCase() === "tv" ? "tv" : parts[kindIndex].toLowerCase() === "p" ? "p" : "reel";
+async function tiktokUsernameFromPage(videoUrl: string): Promise<{ username: string; videoUrl: string } | null> {
   try {
-    const response = await fetch(`https://www.instagram.com/${kind}/${encodeURIComponent(code)}/embed/`, {
+    const response = await fetch(videoUrl, {
+      redirect: "follow",
       signal: AbortSignal.timeout(8000),
       headers: { "User-Agent": BROWSER_UA, Accept: "text/html" },
     });
     if (!response.ok) return null;
-    const html = await readLimited(response, 180_000);
-    const canonical = html.match(/instagram\.com\/([A-Za-z0-9._]{1,30})\/(?:reel|reels|p|tv)\//i);
-    const fromCanonical = canonical ? cleanUsername(canonical[1]) : null;
-    if (fromCanonical && !RESERVED.Instagram.has(fromCanonical.toLowerCase())) return fromCanonical;
-
-    const owner = html.match(/"username"\s*:\s*"([A-Za-z0-9._]{1,30})"/);
-    const fromOwner = owner ? cleanUsername(owner[1]) : null;
-    if (fromOwner && !RESERVED.Instagram.has(fromOwner.toLowerCase())) return fromOwner;
-    return null;
+    const landed = tiktokVideoUrl(response.url) ?? response.url;
+    try {
+      const fromFinal = usernameFromUrl("TikTok", new URL(response.url));
+      if (fromFinal) return { username: fromFinal, videoUrl: landed };
+    } catch {
+      // The page body can still name the account.
+    }
+    const html = await readLimited(response, 500_000);
+    const uniqueId = html.match(/"uniqueId"\s*:\s*"([^"]+)"/);
+    const fromId = uniqueId ? cleanUsername(uniqueId[1]) : null;
+    if (fromId && !RESERVED.TikTok.has(fromId.toLowerCase())) {
+      return { username: fromId, videoUrl: landed };
+    }
+    const canonical = html.match(/tiktok\.com\/@([^/"'?]+)/i);
+    const fromHtml = canonical ? cleanUsername(canonical[1]) : null;
+    return fromHtml ? { username: fromHtml, videoUrl: landed } : null;
   } catch {
     return null;
   }
+}
+
+async function instagramOwner(
+  original: URL,
+  resolved: URL,
+): Promise<{ username: string; videoUrl: string } | null> {
+  const targets: string[] = [];
+  for (const url of [resolved, original]) {
+    const canonical = instagramMediaUrl(url);
+    if (canonical && !targets.includes(canonical)) targets.push(canonical);
+  }
+  for (const url of [resolved, original]) {
+    const value = url.toString();
+    if (!targets.includes(value)) targets.push(value);
+  }
+
+  for (const target of targets) {
+    const found = await instagramUsernameFromPreview(target);
+    if (found) return found;
+  }
+  return null;
+}
+
+function instagramMediaUrl(url: URL): string | null {
+  const parts = segments(url);
+  const kindIndex = parts.findIndex((part) => ["p", "reel", "reels", "tv"].includes(part.toLowerCase()));
+  const code = kindIndex >= 0 ? parts[kindIndex + 1] : null;
+  if (!code || !/^[\w-]+$/.test(code)) return null;
+  const kind = parts[kindIndex].toLowerCase();
+  const path = kind === "tv" ? "tv" : kind === "p" ? "p" : "reel";
+  return `https://www.instagram.com/${path}/${encodeURIComponent(code)}/`;
+}
+
+async function instagramUsernameFromPreview(
+  pageUrl: string,
+): Promise<{ username: string; videoUrl: string } | null> {
+  try {
+    const response = await fetch(pageUrl, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(8000),
+      headers: { "User-Agent": PREVIEW_UA, Accept: "text/html" },
+    });
+    if (!response.ok) return null;
+
+    try {
+      const finalUrl = new URL(response.url);
+      const fromFinal = usernameFromUrl("Instagram", finalUrl);
+      if (fromFinal) return { username: fromFinal, videoUrl: instagramMediaUrl(finalUrl) ?? pageUrl };
+    } catch {
+      // The preview body can still carry the owner.
+    }
+
+    const html = await readLimited(response, 1_200_000);
+    const username = instagramUsernameFromHtml(html);
+    if (!username) return null;
+    return { username, videoUrl: instagramMediaUrl(new URL(pageUrl)) ?? pageUrl };
+  } catch {
+    return null;
+  }
+}
+
+function instagramUsernameFromHtml(html: string): string | null {
+  const links = [
+    ...html.matchAll(/property=["']og:url["']\s+content=["']([^"']+)["']/gi),
+    ...html.matchAll(/content=["']([^"']+)["']\s+property=["']og:url["']/gi),
+    ...html.matchAll(/rel=["']canonical["']\s+href=["']([^"']+)["']/gi),
+  ];
+  for (const match of links) {
+    const href = decodeHtml(match[1]);
+    try {
+      const username = usernameFromUrl("Instagram", new URL(href));
+      if (username) return username;
+    } catch {
+      // Try the next link.
+    }
+  }
+
+  const owner = html.match(/"username"\s*:\s*"([A-Za-z0-9._]{1,30})"/);
+  const fromOwner = owner ? cleanUsername(owner[1]) : null;
+  if (fromOwner && !RESERVED.Instagram.has(fromOwner.toLowerCase())) return fromOwner;
+  return null;
+}
+
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'");
 }
 
 async function followRedirects(start: string, platform: AllowedPlatform): Promise<string> {

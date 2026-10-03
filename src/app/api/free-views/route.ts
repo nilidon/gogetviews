@@ -48,9 +48,9 @@ export async function POST(request: Request) {
       platform: profile.platform,
       profileKey: profile.profileKey,
       username: profile.username,
-      link,
+      link: profile.videoUrl,
       userId: account?.id,
-      send: () => placeFreeViewsOrder(service.service, link),
+      send: () => placeFreeViewsOrder(service.service, profile.videoUrl),
     });
 
     if (!claim.ok && claim.reason === "already_claimed") {
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         serviceId: service.service,
         serviceName: `${profile.platform} - Views`,
         platform: profile.platform,
-        link,
+        link: profile.videoUrl,
         email: account?.email,
         userId: account?.id,
         quantity: FREE_VIEWS_QUANTITY,
