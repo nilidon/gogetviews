@@ -15,12 +15,12 @@ const fallbackPlatforms = [
 ];
 
 const columns = [
-  { title: "Company", links: [{ label: "About", href: "#why-us" }, { label: "Contact", href: "#faq" }] },
+  { title: "Company", links: [{ label: "About", href: "/#why-us" }, { label: "Contact", href: "/contact" }] },
   {
     title: "Support",
     links: [
       { label: "Orders", href: "/account" },
-      { label: "How it works", href: "#how-it-works" },
+      { label: "How it works", href: "/#how-it-works" },
     ],
   },
   { title: "Legal", links: [{ label: "Terms", href: "#" }, { label: "Privacy", href: "#" }, { label: "Refunds", href: "#" }] },

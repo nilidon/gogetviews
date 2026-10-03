@@ -38,12 +38,21 @@ export function AccountDashboard({
   const [message, setMessage] = useState("");
   const [supportState, setSupportState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [supportError, setSupportError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<
+    Array<{ id: string; message: string; reply?: string; createdAt: string }>
+  >([]);
 
   useEffect(() => {
     fetch("/api/account/orders")
       .then((response) => response.json())
       .then((data: { orders?: AccountOrder[] }) => setOrders(data.orders ?? []))
       .finally(() => setLoading(false));
+    fetch("/api/account/support")
+      .then((response) => response.json())
+      .then((data: { messages?: Array<{ id: string; message: string; reply?: string; createdAt: string }> }) =>
+        setMessages(data.messages ?? []),
+      )
+      .catch(() => setMessages([]));
   }, []);
 
   const signOut = async () => {
@@ -68,6 +77,8 @@ export function AccountDashboard({
     }
     setMessage("");
     setSupportState("sent");
+    const latest = await fetch("/api/account/support").then((response) => response.json());
+    setMessages(latest.messages ?? []);
   };
 
   return (
@@ -125,6 +136,22 @@ export function AccountDashboard({
             <p className="mt-1 text-sm text-muted-foreground">
               We&apos;ll reply to {email}.
             </p>
+            {messages.length > 0 && (
+              <ul className="mt-4 flex flex-col gap-3">
+                {messages.map((item) => (
+                  <li key={item.id} className="rounded-xl border border-border p-4">
+                    <p className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString()}</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm">{item.message}</p>
+                    {item.reply && (
+                      <p className="mt-3 whitespace-pre-wrap border-t border-border pt-3 text-sm">
+                        <span className="font-semibold">Reply: </span>
+                        {item.reply}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
             <form onSubmit={sendSupport} className="mt-4">
               <label className="block">
                 <span className="label">Message</span>

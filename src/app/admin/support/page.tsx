@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SupportInbox } from "@/app/admin/support/SupportInbox";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { supabaseEnv } from "@/lib/supabase-env";
 import { listSupportMessages } from "@/lib/support";
@@ -11,7 +12,8 @@ export default async function AdminSupportPage() {
     redirect("/admin/login");
   }
 
-  const messages = supabaseEnv().configured ? await listSupportMessages() : [];
+  const configured = supabaseEnv().configured;
+  const messages = configured ? await listSupportMessages() : [];
 
   return (
     <div className="theme-dark min-h-screen">
@@ -22,22 +24,10 @@ export default async function AdminSupportPage() {
             Back to admin
           </Link>
         </div>
-        {!supabaseEnv().configured ? (
+        {!configured ? (
           <p className="text-sm text-muted">Supabase is not connected yet.</p>
-        ) : messages.length === 0 ? (
-          <p className="text-sm text-muted">No messages yet.</p>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {messages.map((message) => (
-              <li key={message.id} className="card">
-                <p className="text-sm font-semibold">{message.email}</p>
-                <p className="mt-1 text-xs text-muted">
-                  {new Date(message.createdAt).toLocaleString()}
-                </p>
-                <p className="mt-3 whitespace-pre-wrap text-sm">{message.message}</p>
-              </li>
-            ))}
-          </ul>
+          <SupportInbox messages={messages} />
         )}
       </main>
     </div>

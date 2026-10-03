@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { getCurrentAccount } from "@/lib/account-auth";
-import { createSupportMessage } from "@/lib/support";
+import { createSupportMessage, listSupportMessagesForAccount } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const account = await getCurrentAccount();
+  if (!account) {
+    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+  }
+
+  const messages = await listSupportMessagesForAccount(account.id, account.email);
+  return NextResponse.json({ messages });
+}
 
 export async function POST(request: Request) {
   const account = await getCurrentAccount();
@@ -19,6 +29,10 @@ export async function POST(request: Request) {
     );
   }
 
-  await createSupportMessage(account.id, account.email, message);
+  await createSupportMessage({
+    email: account.email,
+    message,
+    userId: account.id,
+  });
   return NextResponse.json({ ok: true });
 }
