@@ -1,13 +1,16 @@
-import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config } from "@/lib/config";
 
 export function Logo({ inverted = false }: { inverted?: boolean }) {
   return (
-    <a href="/" className="flex items-center gap-2" aria-label={`${config.siteName} home`}>
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ArrowUpRight className="size-5" strokeWidth={2.75} aria-hidden="true" />
-      </span>
+    <a href="/" className="flex items-center gap-2.5" aria-label={`${config.siteName} home`}>
+      <img
+        src="/logo.png"
+        alt=""
+        width={62}
+        height={36}
+        className="h-9 w-auto"
+      />
       <span
         className={cn(
           "font-display text-xl font-bold tracking-tight",

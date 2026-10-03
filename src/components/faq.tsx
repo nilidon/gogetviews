@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 
 const faqs = [
   {
-    q: "How do I get my 100,000 free views?",
+    q: "How do I get my 10,000 free views?",
     a: "Pick a platform and paste a public video link. Free views are sent once for that social media profile, even if you try another video on the same account.",
   },
   {
@@ -24,7 +24,7 @@ const faqs = [
 ];
 
 export function Faq({ hasAccount = false }: { hasAccount?: boolean }) {
-  const items = hasAccount ? faqs.filter((item) => !item.q.includes("100,000")) : faqs;
+  const items = hasAccount ? faqs.filter((item) => !item.q.includes("10,000")) : faqs;
   return (
     <section id="faq" className="scroll-mt-16 border-t border-border bg-card py-20 md:py-28">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 lg:grid-cols-[1fr_1.6fr] lg:gap-20">

@@ -46,7 +46,7 @@ export function SiteHeader({
           className="flex items-center justify-center gap-2 bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground hover:bg-ink"
         >
           <span>
-            New here? Get <strong className="font-extrabold">100,000 FREE views</strong>
+            New here? Get <strong className="font-extrabold">10,000 FREE views</strong>
           </span>
           <span aria-hidden="true" className="hidden sm:inline">
             {"→"}
@@ -83,7 +83,7 @@ export function SiteHeader({
               href="/#free-trial"
               className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-ink"
             >
-              Get 100K free views
+              Get 10K free views
             </a>
           )}
         </div>
@@ -139,7 +139,7 @@ export function SiteHeader({
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex h-12 items-center justify-center rounded-full bg-ink text-sm font-semibold text-ink-foreground"
             >
-              Get 100K free views
+              Get 10K free views
             </a>
           )}
         </nav>

@@ -14,7 +14,7 @@ export function Hero({ platforms, onClaim }: HeroProps) {
         <div className="min-w-0">
           <h1 className="font-display font-black tracking-[-0.045em] text-foreground">
             <span className="block text-[clamp(4rem,16vw,6.75rem)] leading-[0.85] text-black">
-              100,000
+              10,000
             </span>
             <span className="mt-1 block text-[clamp(2.6rem,10vw,4.75rem)] leading-none text-black">
               <span className="text-primary">FREE</span> VIEWS

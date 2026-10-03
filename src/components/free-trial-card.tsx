@@ -72,7 +72,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
         </span>
         <div>
           <h2 className={cn("font-display text-xl font-bold leading-tight", tone === "dark" ? "text-white" : "text-foreground")}>
-            Claim 100,000 free views
+            Claim 10,000 free views
           </h2>
           <p className={cn("text-sm", tone === "dark" ? "text-white/60" : "text-muted-foreground")}>
             A one-time welcome gift
@@ -155,7 +155,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
 
         {sent && (
           <p className={cn("text-sm font-medium", tone === "dark" ? "text-white" : "text-foreground")}>
-            Your 100,000 free views are on the way.
+            Your 10,000 free views are on the way.
           </p>
         )}
 
@@ -186,7 +186,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
           disabled={pending || sent}
           className="group mt-1 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:-translate-y-0.5 hover:bg-ink disabled:translate-y-0 disabled:opacity-70"
         >
-          {pending ? "Sending your free views..." : "Claim my 100,000 free views"}
+          {pending ? "Sending your free views..." : "Claim my 10,000 free views"}
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </button>
       </form>

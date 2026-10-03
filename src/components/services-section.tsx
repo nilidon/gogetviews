@@ -53,6 +53,9 @@ export function ServicesSection({
           <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-balance md:text-5xl">
             Place an order
           </h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Each price is for 1,000. Pick how many you want and pay that rate for every thousand. You can buy as many as you want.
+          </p>
         </div>
 
         <div

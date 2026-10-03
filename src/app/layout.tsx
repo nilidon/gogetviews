@@ -12,7 +12,7 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: `${config.siteName} — Grow on every platform`,
   description:
-    "Get your first 100,000 views for free. Real growth services for Instagram, Facebook, TikTok, YouTube, Threads, Twitch and LinkedIn.",
+    "Get your first 10,000 views for free. Real growth services for Instagram, Facebook, TikTok, YouTube, Threads, Twitch and LinkedIn.",
 };
 
 export default function RootLayout({

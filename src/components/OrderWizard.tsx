@@ -166,7 +166,7 @@ export function OrderWizard({
           <div className="mb-10 text-center">
             <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
               Get your first{" "}
-              <span className="text-primary">100,000</span> views for free.
+              <span className="text-primary">10,000</span> views for free.
             </h1>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
               Select a platform, choose your service, paste your link, and pay securely with Stripe.

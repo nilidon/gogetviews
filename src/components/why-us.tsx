@@ -27,7 +27,7 @@ const reasons = [
 const testimonials = [
   {
     quote:
-      "The free 100K views got my TikTok onto the For You page. I came back and ordered for every video since.",
+      "The free 10K views got my TikTok onto the For You page. I came back and ordered for every video since.",
     name: "Maya R.",
     role: "Lifestyle creator",
   },
@@ -40,7 +40,7 @@ const testimonials = [
 
 export function WhyUs({ hasAccount = false }: { hasAccount?: boolean }) {
   const quotes = hasAccount
-    ? testimonials.filter((item) => !/100k|100,000|free views/i.test(item.quote))
+    ? testimonials.filter((item) => !/10k|10,000|100k|100,000|free views/i.test(item.quote))
     : testimonials;
   return (
     <section id="why-us" className="scroll-mt-16 py-20 md:py-28">

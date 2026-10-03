@@ -4,7 +4,7 @@ import { extractPlatform } from "@/lib/platforms";
 import { getServiceOverrides, isServiceEnabled } from "@/lib/service-overrides";
 import type { GoGetViewsService } from "@/types/service";
 
-export const FREE_VIEWS_QUANTITY = 100_000;
+export const FREE_VIEWS_QUANTITY = 10_000;
 
 export function freeViewsServiceTitle(platform: string): string {
   return `${platform} - Views`;
