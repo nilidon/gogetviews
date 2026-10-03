@@ -22,7 +22,7 @@ export function Hero({ platforms, onClaim }: HeroProps) {
           </h1>
 
           <p className="mt-5 max-w-md text-base leading-relaxed text-foreground/75 sm:text-lg">
-            Try it for <span className="font-extrabold text-primary">FREE</span> on Instagram, Facebook, TikTok, YouTube, Threads, Twitch or LinkedIn.
+            Try it for <span className="font-extrabold text-primary">FREE</span> on Instagram and TikTok.
           </p>
 
           <a

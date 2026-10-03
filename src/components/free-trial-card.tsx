@@ -85,10 +85,7 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
           <legend className={cn("mb-3 text-sm font-semibold", tone === "dark" ? "text-white" : "text-foreground")}>
             1. Pick a platform
           </legend>
-          <div
-            className="grid w-full gap-1.5 sm:gap-2"
-            style={{ gridTemplateColumns: `repeat(${Math.max(platforms.length, 1)}, minmax(0, 3rem))` }}
-          >
+          <div className="grid grid-cols-2 gap-3">
             {platforms.map((item) => {
               const active = item.name === platform;
               const brand = getPlatformBrand(item.name);
@@ -97,14 +94,14 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
               return (
                 <label
                   key={item.id}
-                  title={item.name}
                   className={cn(
-                    "relative aspect-square w-full cursor-pointer rounded-full border bg-background transition-colors",
-                    active ? "border-transparent" : "border-border hover:border-foreground/20",
+                    "flex cursor-pointer items-center gap-3 rounded-xl border-2 bg-background px-3 py-3 transition-colors sm:px-4",
+                    active ? "" : "border-border hover:border-foreground/25",
+                    tone === "dark" && !active && "border-white/15 bg-white/5",
                   )}
                   style={
                     active
-                      ? { boxShadow: `0 0 0 2px ${iconColor}`, backgroundColor: `${iconColor}14` }
+                      ? { borderColor: iconColor, backgroundColor: `${iconColor}12` }
                       : undefined
                   }
                 >
@@ -122,12 +119,18 @@ export function FreeTrialCard({ platforms, onClaim, tone = "light" }: FreeTrialC
                     className="sr-only"
                   />
                   <span
-                    className="absolute inset-[22%] flex items-center justify-center text-current"
-                    style={{ color: iconColor }}
+                    className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white"
+                    style={
+                      brand.gradient
+                        ? { background: brand.gradient }
+                        : { backgroundColor: iconColor }
+                    }
                   >
-                    <PlatformIcon id={platformIconKey(item.name)} className="size-full" />
+                    <PlatformIcon id={platformIconKey(item.name)} className="size-6" />
                   </span>
-                  <span className="sr-only">{item.name}</span>
+                  <span className={cn("text-sm font-semibold", tone === "dark" ? "text-white" : "text-foreground")}>
+                    {item.name}
+                  </span>
                 </label>
               );
             })}
